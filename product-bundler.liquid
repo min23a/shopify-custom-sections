@@ -1,0 +1,199 @@
+{{ 'component-product-bundle.css' | asset_url | stylesheet_tag }}
+{{ 'product-bundle-v2.js' | asset_url | script_tag }}
+
+{%- liquid
+  assign fetch_priority = 'auto'
+  if section.index == 1
+    assign fetch_priority = 'high'
+  endif
+-%}
+
+<section id="product_bundle--{{ section.id }}">
+  <h1 class="product_bundle_title">{{ section.settings.title }}</h1>
+  <div class="container-width">
+    <div
+      class="grid isolate"
+    >
+      <div class="grid__item product__media-wrapper">
+        {% if section.settings.bld_img != blank %}
+          {%- assign widths = '165, 360, 535, 750, 1070, 1500' -%}
+          {%- capture sizes -%}
+              (min-width: {{ settings.page_width }}px) {{ settings.page_width | minus: 100 | times: 0.55 }}px,
+              (min-width: 750px) calc((100vw - 130px) / 2), calc((100vw - 50px) / 2)
+            {%- endcapture -%}
+          {{
+            section.settings.bld_img
+            | image_url: width: 1500
+            | image_tag: sizes: sizes, widths: widths, fetchpriority: fetch_priority
+          }}
+        {% else %}
+          {{ 'detailed-apparel-1' | placeholder_svg_tag: 'placeholder-svg' }}
+        {% endif %}
+      </div>
+
+      <div class="grid__item product__info-wrapper grid__item">
+        {% form 'cart', cart %}
+          {% for block in section.blocks %}
+            {% assign product = block.settings.product %}
+            <div class="product_tab">
+              <input
+                type="checkbox"
+                class="productSelection"
+                onclick="setValue(event)"
+                name="pid"
+                id="pid-{{ product.selected_or_first_available_variant.id }}"
+                value="{{ product.selected_or_first_available_variant.id }}"
+              >
+              <lable class="p_details" for="pid-{{ product.selected_or_first_available_variant.id }}">
+                <div class="details_tab">
+                  <div class="product_img">
+                    {% if product != blank %}
+                      <img
+                        width="100"
+                        height="auto"
+                        fetchpriority="{{ fetch_priority }}"
+                        src="{{ product | image_url: width: 100 | image_tag: "sizes" }}"
+                        alt="{{ product.title }}"
+                      >
+                    {% endif %}
+                  </div>
+
+                  <div class="product_info">
+                    <span class="product_title">{{ product.title }}</span>
+                    <br>
+                    <span>
+                      <b>{{ product.price | money_with_currency }}</b>
+                    </span>
+                  </div>
+                </div>
+
+                <div class="variants">
+                  <div class="quantity-box">
+                    <button type="button" onclick="decrement(event)" class="quantity__button">
+                      {% render 'icon-minus' %}
+                    </button>
+                    <input
+                      class="quantity__input"
+                      id="qty-{{ product.selected_or_first_available_variant.id }}"
+                      type="number"
+                      name="qty"
+                      value="1"
+                    >
+                    <button type="button" onclick="increment(event)" class="quantity__button">
+                      {% render 'icon-plus' %}
+                    </button>
+                  </div>
+                  {%- liquid
+                    assign has_variants = false
+                    for variant in product.variants
+                      if forloop.length > 1
+                        assign has_variants = true
+                      endif
+                    endfor
+                  -%}
+                  {% if has_variants %}
+                    <div class="p_variants">
+                      <select
+                        name="variant"
+                        onchange="variantSelector(event)"
+                        id="ps-{{ product.selected_or_first_available_variant.id }}"
+                        class="product-form__variants no-js"
+                      >
+                        {% for variant in product.variants %}
+                          {% if variant.available %}
+                            <option
+                              {% if variant == product.selected_or_first_available_variant %}
+                                selected="selected"
+                              {% endif %}
+                              value="{{ variant.id }}"
+                            >
+                              {{ variant.title }}
+                            </option>
+                          {% else %}
+                            <option disabled="disabled">
+                              {{ variant.title }} - {{ 'products.product.sold_out' | t }}
+                            </option>
+                          {% endif %}
+                        {% endfor %}
+                      </select>
+                    </div>
+                  {% endif %}
+                </div>
+              </lable>
+            </div>
+          {% endfor %}
+
+          <button class="bundle_cta" type="submit" name="add" onclick="bundleAddToCart(event)">
+            <span class="cta_text" name="add_cart">Add to Cart</span>
+            {% render 'loading-spinner' %}
+          </button>
+        {% endform %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% style %}
+  #product_bundle--{{ section.id }} .product__media-wrapper img{
+    max-width: 100%;
+    height: auto;
+  }
+
+  .path{
+    stroke: white;
+
+  }
+  .loading__spinner {
+    width: 2.8rem;
+  }
+
+  @media only screen and (max-width: 426px){
+    #product_bundle--{{ section.id }} .product__media-wrapper img{
+    max-width: 100%;
+    height: auto;
+  }
+  }
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Product Bundle",
+  "max_blocks": 8,
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Heading",
+      "default": "Bundle your Best Choice"
+    },
+    {
+      "type": "image_picker",
+      "id": "bld_img",
+      "label": "Image"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "product",
+      "name": "Product",
+      "settings": [
+        {
+          "type": "product",
+          "id": "product",
+          "label": "t:sections.featured-product.settings.product.label"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Bundle",
+      "blocks": [
+        {
+          "type": "product"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
