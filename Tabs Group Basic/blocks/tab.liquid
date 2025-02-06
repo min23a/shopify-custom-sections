@@ -1,0 +1,30 @@
+<div data-tab="{{ block.id }}" class="tabs-headings">
+  <button class="tab-btn">{{ block.settings.tab_title }}</button>
+</div>
+<div id="tab-{{ block.id }}" class="tabs-content">
+  <div class="tab-content">{{ block.settings.tab_content }}</div>
+</div>
+
+{% schema %}
+  {
+    "name": "Tab",
+    "settings": [
+      {
+        "type": "text",
+        "id": "tab_title",
+        "label": "Tab Title",
+        "default": "Tab"
+      }, {
+        "type": "textarea",
+        "id": "tab_content",
+        "label": "Tab Content",
+        "default": "Enter the content for Tab here."
+      }
+    ],
+    "presets": [
+      {
+        "name": "Tab"
+      }
+    ]
+  }
+{% endschema %}

@@ -1,0 +1,44 @@
+<link rel="stylesheet" href="{{ 'tabs-group.css' | asset_url }}">
+<script src="{{ 'tabs-group.js' | asset_url }}" defer></script>
+
+<div class="tabs-group">
+  {% content_for 'blocks' %}
+</div>
+
+{% schema %}
+{
+  "name": "Tabs Group",
+  "blocks": [{ "type": "@theme" }, { "type": "@app" }],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Color"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Tabs Group",
+      "blocks": [
+        {
+          "type": "tab",
+          "settings": {
+            "tab_title": "tab 1"
+          }
+        },
+        {
+          "type": "tab",
+          "settings": {
+            "tab_title": "tab 2"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

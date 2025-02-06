@@ -1,0 +1,38 @@
+.tabs-group {
+    border: 1px solid #ddd;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+}
+
+.tabs-headings {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 10px;
+}
+
+.tabs-headings.active {
+    background: #eaeaea;
+    border-bottom: none;
+}
+
+.tab-btn {
+    background: #f7f7f7;
+    border: 1px solid #ddd;
+    padding: 10px;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+}
+
+.tabs-content {
+    border-top: 1px solid #ddd;
+    padding: 10px;
+}
+
+.tabs-content {
+    display: none;
+}
+
+.tabs-content.active {
+    display: block;
+}
