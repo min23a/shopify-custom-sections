@@ -1,0 +1,514 @@
+<style>
+  .bulk_btn {
+    width: 100%;
+    background-color: unset;
+    margin-bottom: 1rem;
+    color: #121212;
+    line-height: calc(1 + 0.2 / var(--font-body-scale));
+    font-family: inherit;
+    font-size: 1.5rem;
+    padding: 1em 2em;
+    min-height: calc(4.5rem + var(--buttons-border=width) * 2);
+    cursor: pointer;
+    border: solid 1px;
+    max-width: 438px;
+  }
+
+  .bulk_btn:hover {
+    border-width: 2px;
+  }
+
+  .error--hidden {
+    display: none !important;
+  }
+
+  .content-container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  p {
+    text-align: center;
+    margin: 5px 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    color: #121212;
+    max-width: 438px;
+  }
+
+  p::before {
+    content: '';
+    flex-grow: 1;
+    background-color: var(--block-divider-color);
+    height: 2px;
+    opacity: 0.5;
+  }
+
+  p::after {
+    content: '';
+    flex-grow: 1;
+    background-color: var(--block-divider-color);
+    height: 2px;
+    opacity: 0.5;
+  }
+
+  button {
+    width: 100%;
+  }
+</style>
+
+{% liquid
+  if template.name == 'index'
+    assign product = section.settings.product
+  else
+    assign product = product
+  endif
+  assign block_title_text = block.settings['block-title-text']
+  assign block_title_color = block.settings['block-title-color']
+
+  assign btn_one_qty = block.settings['bulk-btn-one-qty']
+  assign btn_one_text = block.settings['bulk-btn-one-text']
+  assign btn_one_text_color = block.settings['bulk-btn-one-txt-color']
+  assign btn_one_bg_color = block.settings['bulk-btn-one-bg-color']
+
+  assign btn_two_qty = block.settings['bulk-btn-two-qty']
+  assign btn_two_text = block.settings['bulk-btn-two-text']
+  assign btn_two_text_color = block.settings['bulk-btn-two-txt-color']
+  assign btn_two_bg_color = block.settings['bulk-btn-two-bg-color']
+
+  assign btn_three_qty = block.settings['bulk-btn-three-qty']
+  assign btn_three_text = block.settings['bulk-btn-three-text']
+  assign btn_three_text_color = block.settings['bulk-btn-three-txt-color']
+  assign btn_three_bg_color = block.settings['bulk-btn-three-bg-color']
+%}
+
+<template id="main-content">
+  <style>
+    .bulk_btn {
+      width: 100%;
+      background-color: unset;
+      margin-bottom: 1rem;
+      color: #121212;
+      line-height: calc(1 + 0.2 / var(--font-body-scale));
+      font-family: inherit;
+      font-size: 1.5rem;
+      padding: 1em 2em;
+      min-height: calc(4.5rem + var(--buttons-border=width) * 2);
+      cursor: pointer;
+      border: solid 1px;
+      max-width: 438px;
+    }
+
+    .bulk_btn:hover {
+      border-width: 2px;
+    }
+
+    .error--hidden {
+      display: none !important;
+    }
+  </style>
+
+  <div
+    style="display: inline-flex; justify-content: center; align-items: center;"
+    class="bulk-add__error-message-wrapper error--hidden"
+    role="alert"
+  >
+    <svg
+      style="margin-right: 5px"
+      aria-hidden="true"
+      focusable="false"
+      class="icon icon-error"
+      viewBox="0 0 13 13"
+      height="11"
+      width="11"
+    >
+      <circle cx="6.5" cy="6.50049" r="5.5" stroke="white" stroke-width="2"/>
+      <circle cx="6.5" cy="6.5" r="5.5" fill="#EB001B" stroke="#EB001B" stroke-width="0.7"/>
+      <path d="M5.87413 3.52832L5.97439 7.57216H7.02713L7.12739 3.52832H5.87413ZM6.50076 9.66091C6.88091 9.66091 7.18169 9.37267 7.18169 9.00504C7.18169 8.63742 6.88091 8.34917 6.50076 8.34917C6.12061 8.34917 5.81982 8.63742 5.81982 9.00504C5.81982 9.37267 6.12061 9.66091 6.50076 9.66091Z" fill="white"/>
+      <path d="M5.87413 3.17832H5.51535L5.52424 3.537L5.6245 7.58083L5.63296 7.92216H5.97439H7.02713H7.36856L7.37702 7.58083L7.47728 3.537L7.48617 3.17832H7.12739H5.87413ZM6.50076 10.0109C7.06121 10.0109 7.5317 9.57872 7.5317 9.00504C7.5317 8.43137 7.06121 7.99918 6.50076 7.99918C5.94031 7.99918 5.46982 8.43137 5.46982 9.00504C5.46982 9.57872 5.94031 10.0109 6.50076 10.0109Z" fill="white" stroke="#EB001B" stroke-width="0.7">
+    </svg>
+    <span style="font-size: 12px;" class="bulk-add__error-message error--hidden">
+      You can't add more of this product to the cart
+    </span>
+  </div>
+
+  <button class="bulk_btn button">
+    <slot name="btn_text"></slot>
+  </button>
+</template>
+
+<div class="content-container">
+  {% if block_title_text %}
+    <p
+      {% if block_title_color != blank %}
+        style="color: {{ block_title_color }};"
+      {% endif %}
+    >
+      {{ block_title_text }}
+    </p>
+  {% endif %}
+
+  {% if btn_one_text and btn_one_qty > 1 %}
+    <div>
+      <bulk-add-to-cart
+        bg-color="{{ btn_one_bg_color }}"
+        product-id="{{ product.selected_or_first_available_variant.id }}"
+        quantity-to-add="{{ btn_one_qty }}"
+      >
+        <span style="color: {{ btn_one_text_color }};" slot="btn_text">{{ btn_one_text }}</span>
+      </bulk-add-to-cart>
+    </div>
+  {% endif %}
+
+  {% if btn_two_text and btn_two_qty > 1 %}
+    <div>
+      <bulk-add-to-cart
+        bg-color="{{ btn_two_bg_color }}"
+        product-id="{{ product.selected_or_first_available_variant.id }}"
+        quantity-to-add="{{ btn_two_qty }}"
+      >
+        <span style="color: {{ btn_two_text_color }};" slot="btn_text">{{ btn_two_text }}</span>
+      </bulk-add-to-cart>
+    </div>
+  {% endif %}
+  {% if btn_three_text and btn_three_qty > 1 %}
+    <div>
+      <bulk-add-to-cart
+        bg-color="{{ btn_three_bg_color }}"
+        product-id="{{ product.selected_or_first_available_variant.id }}"
+        quantity-to-add="{{ btn_three_qty }}"
+      >
+        <span style="color: {{ btn_three_text_color }}; background-color: {{ btn_three_bg_color }};" slot="btn_text">
+          {{- btn_three_text -}}
+        </span>
+      </bulk-add-to-cart>
+    </div>
+  {% endif %}
+  {% content_for 'blocks' %}
+</div>
+
+<script>
+
+//Store current inventory from liquid inside of Javascript Object
+const inventoryObj = {}
+{% for v in product.variants %}
+    inventoryObj[{{ v.id }}] = {{ v.inventory_quantity }}
+{% endfor %}
+
+class BulkAddToCart extends HTMLElement {
+  constructor() {
+    super();
+
+    //Set up the Shadow DOM in the Web Component
+    const shadow = this.attachShadow({ mode: 'closed' })
+    this.shadowDom = shadow
+
+    const template = document.getElementById('main-content').content.cloneNode(true)
+    shadow.append( template );
+  }
+
+  static get observedAttributes() { return ['product-id', 'quantity-to-add']; }
+
+  bulkAddToCart(variantId, quantity){
+    const requestUrl = window.Shopify.routes.root + 'cart/add.js'
+    const cart = document.querySelector('cart-notification') || document.querySelector('cart-drawer');
+    const productData = {
+        items: [
+            {
+                'id': variantId,
+                'quantity': quantity
+            }
+        ],
+        sections: cart.getSectionsToRender().map((section) => section.id),
+        sections_url: window.location.pathname
+    }
+
+
+    fetch(requestUrl, {
+        method: 'POST',
+        headers: {
+            "content-type": "application/json"
+        },
+        body: JSON.stringify(productData)
+    })
+      .then((response) => response.json())
+      .then(data => {
+        //Store HTML from Section Rendering API into variables
+
+        const sections = data.sections
+
+        //New HTML to update Current DOM with
+        const cartIconBubble = new DOMParser().parseFromString(sections["cart-icon-bubble"], 'text/html')
+        const cartNotificationButton = new DOMParser().parseFromString(sections["cart-notification-button"],'text/html')
+        const cartNotificationProduct = new DOMParser().parseFromString(sections["cart-notification-product"],'text/html')
+
+        console.log("Cart Notification Product Before",cartNotificationProduct)
+
+        //Update Oringinal DOM
+        document.querySelector("#cart-icon-bubble").innerHTML = cartIconBubble.querySelector("#shopify-section-cart-icon-bubble").innerHTML
+
+        document.querySelector("#cart-notification-button").innerHTML = cartNotificationButton.querySelector("#shopify-section-cart-notification-button").innerHTML
+
+        
+
+        console.log("Cart Notification Product After", document.querySelector("#cart-notification-product"))
+
+
+        const found = this.findProductElementByVariantId(cartNotificationProduct, variantId)
+        console.log("The current variant", variantId)
+        console.log("What did I find?", found)
+        document.querySelector("#cart-notification-product").innerHTML = found.innerHTML
+
+
+        //Show Cart Notification
+        cart.open()
+
+      })
+      .catch(err => {
+        console.error(`There was an issue bulk adding to cart \n\n Error Message: ${err}`)
+        const errorMsg = this.shadowDom.querySelector(".bulk-add__error-message-wrapper")
+        errorMsg.classList.toggle("error--hidden")
+      })
+  }
+
+  //Use this section for the refactor
+  getSectionInnerHTML(html, selector = '.shopify-section') {
+    return new DOMParser().parseFromString(html, 'text/html').querySelector(selector).innerHTML;
+  }
+
+  findProductElementByVariantId(htmlString, variantId) {
+
+    const parentElement = htmlString.getElementById('shopify-section-cart-notification-product');
+
+    if (!parentElement) {
+        return null; // Parent element not found
+    }
+
+    // Check if there's only one child element
+    if (parentElement.children.length === 1) {
+        return parentElement.children[0];
+    }
+
+    // Search for child element with matching variant ID
+    for (const child of parentElement.children) {
+        const childIdParts = child.id.split(':');
+        if (childIdParts.length > 1 && childIdParts[0].includes(variantId)) {
+        return child;
+        }
+    }
+
+    return null; // No matching child element found
+  }
+
+  setButtonState(){
+    if(!this.amountInStock || !this.productId) return
+
+    const variantStockCount = this.amountInStock[this.productId]
+    const enoughToAddToCart = variantStockCount >= this.quantity ? true : false
+
+    const bulkBtn = this.shadowDom.querySelector(".bulk_btn")
+
+    if(!enoughToAddToCart){
+        console.log("Render Out of Stock State")
+
+        bulkBtn.style.opacity = "0.5"
+        bulkBtn.style.cursor = "not-allowed"
+        bulkBtn.style.pointerEvents = "none"
+        return
+    }
+
+    bulkBtn.style.opacity = "1"
+    bulkBtn.style.cursor = "pointer"
+    bulkBtn.style.pointerEvents = "auto"
+   
+  }
+
+  
+  connectedCallback() {
+    console.log("BulkAddToCart has connected")
+
+    //get attributes and assign them to component variables
+    const product_id = this.getAttribute("product-id")
+    const quantity = this.getAttribute("quantity-to-add")
+    const btn_bg_color = this.getAttribute("bg-color")
+
+    this.productId = product_id ? product_id : null
+    this.quantity = quantity ? quantity: null
+    this.amountInStock = inventoryObj ? inventoryObj : null
+
+    //Set Button State
+    this.setButtonState()
+
+    //Set up Button Event Listeners
+    const bulkBtn = this.shadowDom.querySelector(".bulk_btn")
+    bulkBtn.style.backgroundColor = btn_bg_color
+
+    bulkBtn.addEventListener("click", () => {
+        this.bulkAddToCart(this.productId, this.quantity)
+    })
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'product-id') {
+        this.productId = newValue;
+        this.setButtonState()
+    }
+
+  }
+}
+
+customElements.define('bulk-add-to-cart', BulkAddToCart);
+
+const target = document.querySelector(".product.grid")
+const config = {
+   childList: true,
+   subtree: true
+ };
+
+ const observer = new MutationObserver(() => {
+
+    const bulkAddComponents = Array.from(document.querySelectorAll("bulk-add-to-cart"))
+    const currentUrl = window.location.href
+    const hasQueryParam = currentUrl.includes("?variant=")
+    
+
+
+    if(!bulkAddComponents || bulkAddComponents.length < 1) return
+    if(!hasQueryParam) return
+
+    const getVariantIdFromUrl = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('variant');
+    }
+
+    // const indexOfParam = currentUrl.lastIndexOf("?variant=")
+    const productVariantId = getVariantIdFromUrl()
+
+    bulkAddComponents.forEach( component => {
+        component.setAttribute("product-id", productVariantId)
+    })
+ })
+ observer.observe(target, config)
+</script>
+
+{% schema %}
+{
+  "name": "bulk-add-to-cart-buttons",
+  "blocks": [{ "type": "@theme" }, { "type": "@app" }],
+  "settings": [
+    {
+      "type": "header",
+      "content": "General Block Settings"
+    },
+    {
+      "type": "text",
+      "id": "block-title-text",
+      "default": "Buy More, Save More!",
+      "label": "Block Title Text"
+    },
+    {
+      "type": "color",
+      "id": "block-title-color",
+      "label": "Block Title Color",
+      "default": "#121212"
+    },
+    {
+      "type": "color",
+      "id": "block-divider-color",
+      "label": "Block Divider Color",
+      "default": "#121212"
+    },
+    {
+      "type": "header",
+      "content": "Bulk Button 1 Settings"
+    },
+    {
+      "type": "text",
+      "default": "Buy 2 at 10% Off",
+      "id": "bulk-btn-one-text",
+      "label": "Button Text"
+    },
+    {
+      "type": "number",
+      "default": 2,
+      "id": "bulk-btn-one-qty",
+      "label": "Qauntity To Add"
+    },
+    {
+      "type": "color",
+      "id": "bulk-btn-one-txt-color",
+      "label": "Button Text Color",
+      "default": "#121212"
+    },
+    {
+      "type": "color",
+      "id": "bulk-btn-one-bg-color",
+      "label": "Button Background Color",
+      "default": "#fff"
+    },
+    {
+      "type": "header",
+      "content": "Bulk Button 2 Settings"
+    },
+    {
+      "type": "text",
+      "default": "Buy 3 at 10% Off",
+      "id": "bulk-btn-two-text",
+      "label": "Button Text"
+    },
+    {
+      "type": "number",
+      "default": 3,
+      "id": "bulk-btn-two-qty",
+      "label": "Qauntity To Add"
+    },
+    {
+      "type": "color",
+      "id": "bulk-btn-two-txt-color",
+      "label": "Button Text Color",
+      "default": "#121212"
+    },
+    {
+      "type": "color",
+      "id": "bulk-btn-two-bg-color",
+      "label": "Button Background Color",
+      "default": "#fff"
+    },
+    {
+      "type": "header",
+      "content": "Bulk Button 3 Settings"
+    },
+    {
+      "type": "text",
+      "default": "Buy 4 at 10% Off",
+      "id": "bulk-btn-three-text",
+      "label": "Button Text"
+    },
+    {
+      "type": "number",
+      "default": 4,
+      "id": "bulk-btn-three-qty",
+      "label": "Qauntity To Add"
+    },
+    {
+      "type": "color",
+      "id": "bulk-btn-three-txt-color",
+      "label": "Button Text Color",
+      "default": "#121212"
+    },
+    {
+      "type": "color",
+      "id": "bulk-btn-three-bg-color",
+      "label": "Button Background Color",
+      "default": "#fff"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Bulk Add to Cart Buttons"
+    }
+  ]
+}
+{% endschema %}
