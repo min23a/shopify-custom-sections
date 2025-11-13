@@ -31,143 +31,143 @@ class FacetFiltersForm extends HTMLElement {
     });
   }
 
-// --- renderPage ---
-static renderPage(searchParams, event, updateURLHash = true) {
-  FacetFiltersForm.searchParamsPrev = searchParams;
+  // --- renderPage ---
+  static renderPage(searchParams, event, updateURLHash = true) {
+    FacetFiltersForm.searchParamsPrev = searchParams;
 
-  const urlParams = new URLSearchParams(searchParams);
-  const tagValues = urlParams.getAll("filter.p.tag");
-  urlParams.delete("filter.p.tag");
+    const urlParams = new URLSearchParams(searchParams);
+    const tagValues = urlParams.getAll("filter.p.tag");
+    urlParams.delete("filter.p.tag");
 
-  const sections = FacetFiltersForm.getSections();
-  const countContainer = document.getElementById("ProductCount");
-  const countContainerDesktop = document.getElementById("ProductCountDesktop");
-  const loadingSpinners = document.querySelectorAll(
-    ".facets-container .loading__spinner, facet-filters-form .loading__spinner"
-  );
+    const sections = FacetFiltersForm.getSections();
+    const countContainer = document.getElementById("ProductCount");
+    const countContainerDesktop = document.getElementById("ProductCountDesktop");
+    const loadingSpinners = document.querySelectorAll(
+      ".facets-container .loading__spinner, facet-filters-form .loading__spinner"
+    );
 
-  loadingSpinners.forEach((spinner) => spinner.classList.remove("hidden"));
-  document
-    .getElementById("ProductGridContainer")
-    .querySelector(".collection")
-    .classList.add("loading");
+    loadingSpinners.forEach((spinner) => spinner.classList.remove("hidden"));
+    document
+      .getElementById("ProductGridContainer")
+      .querySelector(".collection")
+      .classList.add("loading");
 
-  if (countContainer) countContainer.classList.add("loading");
-  if (countContainerDesktop) countContainerDesktop.classList.add("loading");
+    if (countContainer) countContainer.classList.add("loading");
+    if (countContainerDesktop) countContainerDesktop.classList.add("loading");
 
-  // get base collection handle from URL
-  const pathParts = window.location.pathname.split("/").filter(Boolean);
-  const basePath = pathParts[1] || pathParts[0]; // e.g., "tubes"
+    // get base collection handle from URL
+    const pathParts = window.location.pathname.split("/").filter(Boolean);
+    const basePath = pathParts[1] || pathParts[0]; // e.g., "tubes"
 
-  const urls = tagValues.length > 0
-    ? tagValues.map(tag => `/collections/${basePath}/${tag}?section_id=${sections[0].section}&${urlParams.toString()}`)
-    : [`${window.location.pathname}?section_id=${sections[0].section}&${urlParams.toString()}`];
+    const urls = tagValues.length > 0
+      ? tagValues.map(tag => `/collections/${basePath}/${tag}?section_id=${sections[0].section}&${urlParams.toString()}`)
+      : [`${window.location.pathname}?section_id=${sections[0].section}&${urlParams.toString()}`];
 
-  FacetFiltersForm.renderSectionFromFetch(urls, event);
+    FacetFiltersForm.renderSectionFromFetch(urls, event);
 
-  if (updateURLHash) FacetFiltersForm.updateURLHash(searchParams);
-}
+    if (updateURLHash) FacetFiltersForm.updateURLHash(searchParams);
+  }
 
-static renderSectionFromFetch(urls, event) {
-  const fetches = Array.isArray(urls) ? urls : [urls];
-  const urlParams = new URLSearchParams(window.location.search);
-  const tagValues = urlParams.getAll("filter.p.tag");
+  static renderSectionFromFetch(urls, event) {
+    const fetches = Array.isArray(urls) ? urls : [urls];
+    const urlParams = new URLSearchParams(window.location.search);
+    const tagValues = urlParams.getAll("filter.p.tag");
 
-  // group tags by prefix (L_11 → group L)
-  const groups = {};
-  tagValues.forEach(tag => {
-    const key = tag.includes("_") ? tag.split("_")[0] : "misc";
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(tag);
-  });
+    // group tags by prefix (L_11 → group L)
+    const groups = {};
+    tagValues.forEach(tag => {
+      const key = tag.includes("_") ? tag.split("_")[0] : "misc";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(tag);
+    });
 
-  Promise.all(fetches.map(url => fetch(url).then(res => res.text().then(text => ({ text, url })) )))
-    .then(responses => {
-      // --- Step 1: Collect all products ---
-      let allProducts = [];
+    Promise.all(fetches.map(url => fetch(url).then(res => res.text().then(text => ({ text, url })))))
+      .then(responses => {
+        // --- Step 1: Collect all products ---
+        let allProducts = [];
 
-      responses.forEach(({ text, url }, i) => {
-        const doc = new DOMParser().parseFromString(text, "text/html");
-        const products = [...doc.querySelectorAll("#product-grid .grid__item")];
+        responses.forEach(({ text, url }, i) => {
+          const doc = new DOMParser().parseFromString(text, "text/html");
+          const products = [...doc.querySelectorAll("#product-grid .grid__item")];
 
-        // Update filters & counts from first response
-        if (i === 0) {
-          console.log(i);
-          FacetFiltersForm.renderFilters(text, event);
-          FacetFiltersForm.renderProductCount(text);
-          FacetFiltersForm.reflectActiveTagsInFilters(tagValues);
-        }
+          // Update filters & counts from first response
+          if (i === 0) {
+            console.log(i);
+            FacetFiltersForm.renderFilters(text, event);
+            FacetFiltersForm.renderProductCount(text);
+            FacetFiltersForm.reflectActiveTagsInFilters(tagValues);
+          }
 
-        products.forEach(el => {
-          const key = el.querySelector("a.full-unstyled-link")?.getAttribute("href") || el.id;
-          const isTop = el.getAttribute("data-is-top") === "true"; // 👈 use attribute
-          allProducts.push({ key, el, isTop });
-        });
-      });
-
-      // --- Step 2: Deduplicate ---
-      const unique = {};
-      allProducts.forEach(p => {
-        if (!unique[p.key]) unique[p.key] = p;
-        else if (p.isTop) unique[p.key].isTop = true; // preserve top flag
-      });
-
-      // --- Step 3: Apply group logic ---
-      let finalProducts;
-      const groupKeys = Object.keys(groups);
-
-      if (groupKeys.length > 1) {
-        // AND across groups
-        let groupedResults = {};
-
-        groupKeys.forEach(groupKey => {
-          groupedResults[groupKey] = [];
-          groups[groupKey].forEach(tag => {
-            Object.values(unique).forEach(p => {
-              if (p.el.textContent.toLowerCase().includes(tag.toLowerCase())) {
-                groupedResults[groupKey].push(p);
-              }
-            });
+          products.forEach(el => {
+            const key = el.querySelector("a.full-unstyled-link")?.getAttribute("href") || el.id;
+            const isTop = el.getAttribute("data-is-top") === "true"; // 👈 use attribute
+            allProducts.push({ key, el, isTop });
           });
         });
 
-        // intersect across groups
-        let intersection = groupedResults[groupKeys[0]].map(p => p.key);
-        for (let i = 1; i < groupKeys.length; i++) {
-          const keys = groupedResults[groupKeys[i]].map(p => p.key);
-          intersection = intersection.filter(k => keys.includes(k));
+        // --- Step 2: Deduplicate ---
+        const unique = {};
+        allProducts.forEach(p => {
+          if (!unique[p.key]) unique[p.key] = p;
+          else if (p.isTop) unique[p.key].isTop = true; // preserve top flag
+        });
+
+        // --- Step 3: Apply group logic ---
+        let finalProducts;
+        const groupKeys = Object.keys(groups);
+
+        if (groupKeys.length > 1) {
+          // AND across groups
+          let groupedResults = {};
+
+          groupKeys.forEach(groupKey => {
+            groupedResults[groupKey] = [];
+            groups[groupKey].forEach(tag => {
+              Object.values(unique).forEach(p => {
+                if (p.el.textContent.toLowerCase().includes(tag.toLowerCase())) {
+                  groupedResults[groupKey].push(p);
+                }
+              });
+            });
+          });
+
+          // intersect across groups
+          let intersection = groupedResults[groupKeys[0]].map(p => p.key);
+          for (let i = 1; i < groupKeys.length; i++) {
+            const keys = groupedResults[groupKeys[i]].map(p => p.key);
+            intersection = intersection.filter(k => keys.includes(k));
+          }
+          finalProducts = intersection.map(k => unique[k]);
+
+        } else {
+          // Only one group → OR (union)
+          finalProducts = Object.values(unique);
         }
-        finalProducts = intersection.map(k => unique[k]);
 
-      } else {
-        // Only one group → OR (union)
-        finalProducts = Object.values(unique);
-      }
+        // --- Step 4: Sort top first ---
+        finalProducts.sort((a, b) => {
+          if (a.isTop === b.isTop) return 0;
+          return a.isTop ? -1 : 1;
+        });
 
-      // --- Step 4: Sort top first ---
-      finalProducts.sort((a, b) => {
-        if (a.isTop === b.isTop) return 0;
-        return a.isTop ? -1 : 1;
+        // --- Step 5: Render ---
+        const gridContainer = document.getElementById("ProductGridContainer");
+        const productList = gridContainer.querySelector("#product-grid");
+        console.log(finalProducts)
+        productList.innerHTML = finalProducts.map(p => p.el.outerHTML).join("");
+
+        gridContainer.querySelector(".collection").classList.remove("loading");
+
+        if (typeof initializeScrollAnimationTrigger === "function") {
+          initializeScrollAnimationTrigger(productList); // ✅ pass element, not string
+        }
+
+        // hide spinners
+        document.querySelectorAll(
+          ".facets-container .loading__spinner, facet-filters-form .loading__spinner"
+        ).forEach(spinner => spinner.classList.add("hidden"));
       });
-
-      // --- Step 5: Render ---
-      const gridContainer = document.getElementById("ProductGridContainer");
-      const productList = gridContainer.querySelector("#product-grid");
-      console.log(finalProducts)
-      productList.innerHTML = finalProducts.map(p =>p.el.outerHTML).join("");
-
-      gridContainer.querySelector(".collection").classList.remove("loading");
-
-      if (typeof initializeScrollAnimationTrigger === "function") {
-        initializeScrollAnimationTrigger(productList); // ✅ pass element, not string
-      }
-
-      // hide spinners
-      document.querySelectorAll(
-        ".facets-container .loading__spinner, facet-filters-form .loading__spinner"
-      ).forEach(spinner => spinner.classList.add("hidden"));
-    });
-}
+  }
 
   static reflectActiveTagsInFilters(tagValues) {
     const checkboxes = document.querySelectorAll('input[type="checkbox"][name="filter.p.tag"]');
@@ -177,7 +177,7 @@ static renderSectionFromFetch(urls, event) {
   }
 
 
-// new code end
+  // new code end
 
   static renderSectionFromCache(filterDataUrl, event) {
     console.log('cached')
@@ -279,11 +279,11 @@ static renderSectionFromFetch(urls, event) {
     FacetFiltersForm.renderActiveFacets(parsedHTML);
     FacetFiltersForm.renderAdditionalElements(parsedHTML);
 
-  setTimeout(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tagValues = urlParams.getAll("filter.p.tag");
-    FacetFiltersForm.reflectActiveTagsInFilters(tagValues);
-  }, 0); 
+    setTimeout(() => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tagValues = urlParams.getAll("filter.p.tag");
+      FacetFiltersForm.reflectActiveTagsInFilters(tagValues);
+    }, 0);
 
     if (countsToRender) {
       const closestJSFilterID = event.target.closest(".js-filter").id;
@@ -310,7 +310,7 @@ static renderSectionFromFetch(urls, event) {
         if (newElementToActivate) newElementToActivate.focus();
       }
     }
-    
+
   }
 
   static renderActiveFacets(html) {
@@ -458,8 +458,8 @@ static renderSectionFromFetch(urls, event) {
       event.currentTarget.href.indexOf("?") == -1
         ? ""
         : event.currentTarget.href.slice(
-            event.currentTarget.href.indexOf("?") + 1
-          );
+          event.currentTarget.href.indexOf("?") + 1
+        );
     FacetFiltersForm.renderPage(url);
   }
 }
