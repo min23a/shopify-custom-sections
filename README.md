@@ -1,3 +1,34 @@
+# Shopify Theme Customization & Front-End Work
+
+This repository contains Shopify front-end development work focused on:
+
+- Theme customization (Dawn / Online Store 2.0)
+- App-free custom sections
+- Performance-oriented Liquid & JavaScript patterns
+- Practical solutions to real Shopify storefront problems
+
+Most of the work here is based on real production issues found in live Shopify stores.
+
+---
+
+## Shopify development guides & case studies
+
+I regularly document Shopify development problems, solutions, and real-world case studies here:
+
+👉 https://abedin.online
+
+### Relevant guides:
+- Advanced Shopify filtering & Dawn theme behavior  
+  https://abedin.online/blogs/shopify-tag-filtering-dawn-theme
+
+- What a Shopify developer actually does (beyond apps & setup)  
+  https://abedin.online/blogs/what-is-shopify-developer
+
+---
+
+If you're working with Shopify themes and want clean, upgrade-safe solutions, feel free to explore the code or reach out.
+
+
 # 🧩 Shopify Custom Sections
 
 A growing collection of **custom-coded Shopify sections** built for performance, flexibility, and easy integration — without relying on paid apps.  
@@ -52,5 +83,6 @@ In your Shopify admin, go to Online Store → Themes → Edit Code
 Upload each .liquid file into the /sections/ directory of your theme
 
 Upload any required .js and .css files into the /assets/ directory
+
 
 
